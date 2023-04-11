@@ -17,7 +17,7 @@ function list_files() {
 
 
     for file in "$dir/"* "$dir/".*; do
-	if [[ -f "$file" ]] then
+	if [[ -f "$file" ]]; then
             echo "${depthstr} ${file##*/}"
 	fi
     done
@@ -43,13 +43,19 @@ function list_directories() {
 
 
     # Return if it has recursed enough
-    if [[ $maxdepth > 0 ]] && [[ $depth -ge $maxdepth ]] then
+    if [[ $maxdepth > 0 ]] && [[ $depth -ge $maxdepth ]]; then
 	    return
     fi
 
     # Check if can access directory
-    if [[ ! -r "$dir" ]] then
+    if [[ ! -r "$dir" ]]; then
         echo "${fileindent} ACCESS DENIED"
+	return
+    fi
+
+    # Check if directory is a symlink
+    if [[ -h "$dir" ]]; then
+	echo "${fileindent} IGNORING SYMLINK"
 	return
     fi
 
@@ -57,7 +63,10 @@ function list_directories() {
 
     for file in "$dir/"* "$dir/".*; do
         if [[ -d "$file" ]]; then
-            list_directories "$file" "$((depth+1))" $maxdepth
+		local bname=$(basename "$file")
+	    if [[ "$bname" != ".." ]] && [[ "$bname" != "." ]]; then
+                list_directories "$file" "$((depth+1))" $maxdepth
+	    fi
 	fi
     done
 }
